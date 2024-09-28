@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+    <style>
+        body {
+            background-color: #1f2937; /* Gray-800 */
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background-color: #111827; /* Gray-900 */
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        input {
+            width: 93%;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            background-color: #374151; /* Gray-700 */
+            color: #ffffff;
+            border: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3b82f6; /* Blue-600 */
+            border-radius: 4px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2563eb; /* Blue-500 */
+        }
+
+        #result {
+            margin-top: 16px;
+            display: none; /* Hidden by default */
+        }
+
+        #error {
+            margin-top: 16px;
+            color: #f87171; /* Red-500 */
+            display: none; /* Hidden by default */
+        }
+
+        .copy-button {
+            border: 1px solid transparent;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .copy-button:hover {
+            background-color: rgba(59, 130, 246, 0.2); /* Lighten on hover */
+        }
+
+        .copied {
+            background-color: rgba(34, 197, 94, 0.2); /* Green-500 */
+            color: #22c55e; /* Green-500 */
+            transform: scale(1.05);
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>URL Shortener</h1>
+        <form id="urlForm">
+            <input
+                type="text"
+                id="urlInput"
+                placeholder="Enter your long URL here"
+                required
+            />
+            <button type="submit">Shorten URL</button>
+        </form>
+        <div id="result" class="hidden">
+            <h2 class="font-semibold">Shortened URL:</h2>
+            <p id="shortUrl" class="text-blue-400"></p>
+            <button class="copy-button" id="copyButton" onclick="copyUrl()">
+                Copy
+            </button>
+        </div>
+        <div id="error"></div>
+    </div>
+
+    <script>
+        document.getElementById("urlForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const urlInput = document.getElementById("urlInput").value;
+            const resultDiv = document.getElementById("result");
+            const shortUrlElement = document.getElementById("shortUrl");
+            const errorDiv = document.getElementById("error");
+
+            resultDiv.style.display = "none"; // Hide result initially
+            errorDiv.style.display = "none"; // Hide error initially
+
+            try {
+                const response = await fetch("/api/shorten", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ original_url: urlInput }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    shortUrlElement.textContent = `${window.location.origin}/api/${data.short_url}`;
+                    resultDiv.style.display = "block"; // Show result
+                } else {
+                    errorDiv.textContent = data.error || "Failed to shorten URL";
+                    errorDiv.style.display = "block"; // Show error
+                }
+            } catch (error) {
+                errorDiv.textContent = "An error occurred while shortening the URL.";
+                errorDiv.style.display = "block"; // Show error
+            }
+        });
+
+        const copyUrl = () => {
+            const shortUrlElement = document.getElementById("shortUrl");
+            navigator.clipboard.writeText(shortUrlElement.textContent);
+            const copyButton = document.getElementById("copyButton");
+
+            // Add animation class
+            copyButton.classList.add("copied");
+            setTimeout(() => {
+                copyButton.classList.remove("copied");
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
